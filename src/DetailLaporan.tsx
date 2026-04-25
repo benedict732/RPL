@@ -2,11 +2,10 @@ import React from "react";
 
 interface DetailProps {
   onBack: () => void;
-  selectedData: any; // Ini data yang dikirim dari App.tsx (handleGoToDetail)
+  selectedData: any;
 }
 
 const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
-  // Jika data belum ada (misal refresh halaman), tampilkan loading
   if (!selectedData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -15,10 +14,23 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
     );
   }
 
+  // Fungsi untuk memformat tanggal agar hanya muncul Tanggal, Bulan, Tahun
+  const formatTanggal = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+    } catch (e) {
+      return dateString;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans text-left">
       <div className="max-w-4xl mx-auto">
-        {/* Header Navigasi */}
         <div className="flex justify-between items-center mb-10">
           <button
             onClick={onBack}
@@ -38,7 +50,6 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
 
         <div className="bg-white rounded-[50px] shadow-2xl border border-blue-50 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Sisi Kiri: Info Pelapor & Status */}
             <div className="p-10 bg-[#1e1b4b] text-white">
               <div className="space-y-8">
                 <div>
@@ -54,7 +65,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     Nama Pelapor
                   </label>
                   <p className="text-xl font-bold uppercase">
-                    {selectedData.nama || "Siswa"}
+                    {selectedData.nama || selectedData.nama_pelapor || "Siswa"}
                   </p>
                 </div>
                 <div>
@@ -69,12 +80,14 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                   <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
                     Tanggal Kejadian
                   </label>
-                  <p className="font-medium">{selectedData.tanggal_lapor}</p>
+                  {/* PERBAIKAN DI SINI: Memanggil fungsi formatTanggal */}
+                  <p className="font-medium">
+                    {formatTanggal(selectedData.tanggal_lapor)}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Sisi Kanan: Deskripsi & Foto */}
             <div className="p-10 space-y-8">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">
@@ -94,7 +107,13 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     <img
                       src={`http://localhost:8080/uploads/${selectedData.foto}`}
                       alt="Bukti Laporan"
-                      className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500"
+                      className="w-full h-48 object-cover cursor-pointer"
+                      onClick={() =>
+                        window.open(
+                          `http://localhost:8080/uploads/${selectedData.foto}`,
+                          "_blank",
+                        )
+                      }
                     />
                   </div>
                 ) : (

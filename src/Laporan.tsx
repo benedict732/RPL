@@ -42,21 +42,18 @@ const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
   const handleKirimLaporan = async () => {
     if (!jenis || !deskripsi) return alert("Pilih kategori dan isi deskripsi!");
 
-    // PERBAIKAN: Gunakan JSON object, karena Backend kita belum pakai Multer untuk FormData
-    const dataLaporan = {
-      id_siswa: user.id,
-      kategori: jenis,
-      isi_laporan: deskripsi,
-      foto: foto ? foto.name : "", // Kirim nama filenya saja sebagai string
-    };
+    const formData = new FormData();
+    formData.append("id_siswa", user.id);
+    formData.append("kategori", jenis);
+    formData.append("isi_laporan", deskripsi);
+    if (foto) {
+      formData.append("foto", foto);
+    }
 
     try {
       const res = await fetch("http://localhost:8080/api/laporan", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataLaporan),
+        body: formData, // Menggunakan FormData secara otomatis mengatur header multipart
       });
 
       if (res.ok) {

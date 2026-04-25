@@ -1,193 +1,171 @@
 import React, { useState, useEffect } from "react";
+import Login from "./Login";
+import Register from "./Register";
+import Beranda from "./Beranda";
+import Laporan from "./Laporan";
+import Konsultasi from "./Konsultasi";
+import BerandaAdmin from "./BerandaAdmin";
+import RiwayatLaporan from "./RiwayatLaporan";
+import RiwayatKonsultasi from "./RiwayatKonsultasi";
+import DetailLaporan from "./DetailLaporan";
+import DetailKonsultasi from "./DetailKonsultasi";
+import AdminLihatLaporan from "./AdminLihatLaporan";
+import AdminDetailLaporan from "./AdminDetailLaporan";
+import AdminLihatKonsultasi from "./AdminLihatKonsultasi";
+import AdminDetailKonsultasi from "./AdminDetailKonsultasi";
 
-// Perbaikan 1: Interface harus sama persis dengan yang dipanggil di App.tsx
-interface Props {
-  onLogout: () => void;
-  onTambahLaporan: () => void;
-  onLihatDetail: (item: any) => void;
-  onGoKonsultasi: () => void;
-  onGoRiwayat: () => void;
-  // Jika di App.tsx kamu tidak mengirim onGoRiwayatLapor,
-  // maka di sini kita buat opsional pakai '?' agar tidak error.
-  onGoRiwayatLapor?: () => void;
-}
-
-const Beranda: React.FC<Props> = ({
-  onLogout,
-  onTambahLaporan,
-  onLihatDetail,
-  onGoKonsultasi,
-  onGoRiwayat,
-  onGoRiwayatLapor,
-}) => {
-  const [riwayatLaporan, setRiwayatLaporan] = useState<any[]>([]);
-  const [riwayatKonsultasi, setRiwayatKonsultasi] = useState<any[]>([]);
-
-  // Perbaikan 2: Ambil user dengan aman
-  const [user] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+const App: React.FC = () => {
+  const [user, setUser] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState<string>("login");
+  const [selectedData, setSelectedData] = useState<any>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user?.id) return;
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      setCurrentPage(parsedUser.role === "admin" ? "admin_beranda" : "beranda");
+    } else {
+      setCurrentPage("login");
+    }
+  }, []);
 
-      try {
-        const resLapor = await fetch(
-          `http://localhost:8080/api/laporan/user/${user.id}`,
-        );
-        if (resLapor.ok) {
-          const dataLapor = await resLapor.json();
-          setRiwayatLaporan(Array.isArray(dataLapor) ? dataLapor : []);
-        }
+  const handleLogin = (role: string) => {
+    const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    setUser(savedUser);
+    setCurrentPage(role === "admin" ? "admin_beranda" : "beranda");
+  };
 
-        const resKonsul = await fetch(
-          `http://localhost:8080/api/riwayat/${user.id}`,
-        );
-        if (resKonsul.ok) {
-          const dataKonsul = await resKonsul.json();
-          setRiwayatKonsultasi(Array.isArray(dataKonsul) ? dataKonsul : []);
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
-    };
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    setCurrentPage("login");
+  };
 
-    fetchData();
-  }, [user?.id]);
+  if (!user && currentPage !== "register") {
+    return (
+      <Login
+        onSwitch={() => setCurrentPage("register")}
+        onLogin={handleLogin}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white font-sans text-left">
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-10 py-6 border-b border-gray-100">
-        <h1 className="text-2xl font-black text-blue-900 italic tracking-tighter uppercase">
-          SIBY Group
-        </h1>
-        <div className="flex items-center gap-8 font-bold text-sm">
-          <button className="text-blue-900 border-b-2 border-blue-900 pb-1">
-            Beranda
-          </button>
-          <button
-            onClick={onGoKonsultasi}
-            className="text-gray-400 hover:text-blue-900 transition-all uppercase"
-          >
-            Konsultasi
-          </button>
-          <button
-            onClick={onLogout}
-            className="bg-red-500 text-white px-6 py-2 rounded-full shadow-lg active:scale-95 transition-all uppercase tracking-widest text-[10px]"
-          >
-            Log out
-          </button>
-        </div>
-      </nav>
+    <div className="App">
+      {/* --- ROUTING SISWA --- */}
+      {currentPage === "beranda" && (
+        <Beranda
+          onLogout={handleLogout}
+          onTambahLaporan={() => setCurrentPage("laporan")}
+          onGoKonsultasi={() => setCurrentPage("konsultasi")}
+          onGoRiwayat={() => setCurrentPage("riwayat_konsultasi")}
+          onGoRiwayatLapor={() => setCurrentPage("riwayat_laporan")} // PERBAIKAN NAMA DISINI
+          onLihatDetail={(item: any) => {
+            setSelectedData(item);
+            setCurrentPage("detail_laporan");
+          }}
+        />
+      )}
 
-      {/* Hero Section */}
-      <div className="mx-10 mt-6 bg-blue-900 rounded-[40px] py-20 text-center shadow-xl">
-        <h2 className="text-4xl font-black text-white mb-2 italic uppercase tracking-tight">
-          Sistem Pengaduan Masalah
-        </h2>
-        <p className="text-blue-300 font-bold tracking-[0.3em] mb-10 text-[10px]">
-          SMP TRIDHARMA MANADO
-        </p>
-        <button
-          onClick={onTambahLaporan}
-          className="bg-blue-500 text-white font-black px-10 py-4 rounded-2xl shadow-lg uppercase text-sm hover:bg-blue-400 active:scale-95 transition-all"
-        >
-          Laporkan Sekarang!
-        </button>
-      </div>
+      {currentPage === "laporan" && (
+        <Laporan onBack={() => setCurrentPage("beranda")} />
+      )}
 
-      <div className="mx-10 mt-12 mb-20 grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Riwayat Laporan */}
-        <section>
-          <div className="flex justify-between items-center mb-6 border-l-4 border-blue-500 pl-4">
-            <h3 className="text-xl font-black text-blue-900 uppercase italic">
-              Riwayat Laporan
-            </h3>
-            <button
-              onClick={onGoRiwayatLapor} // Menghubungkan ke fungsi detail laporan jika ada
-              className="text-[10px] font-black text-blue-500 underline uppercase"
-            >
-              Lihat Semua ↩
-            </button>
-          </div>
-          <div className="space-y-4">
-            {riwayatLaporan.length > 0 ? (
-              riwayatLaporan.slice(0, 2).map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => onLihatDetail(item)}
-                  className="bg-white p-6 rounded-[30px] shadow-md border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-300 group transition-all"
-                >
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
-                      {item.tanggal_lapor}
-                    </p>
-                    <p className="font-bold text-blue-900 uppercase">
-                      Kasus {item.kategori}
-                    </p>
-                  </div>
-                  <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-[9px] font-black uppercase">
-                    {item.status}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-300 font-bold italic ml-4 text-sm">
-                Belum ada laporan...
-              </p>
-            )}
-          </div>
-        </section>
+      {currentPage === "konsultasi" && (
+        <Konsultasi
+          onBack={() => setCurrentPage("beranda")}
+          onSent={() => setCurrentPage("beranda")}
+        />
+      )}
 
-        {/* Riwayat Konsultasi */}
-        <section>
-          <div className="flex justify-between items-center mb-6 border-l-4 border-orange-500 pl-4">
-            <h3 className="text-xl font-black text-blue-900 uppercase italic">
-              Riwayat Konsultasi
-            </h3>
-            <button
-              onClick={onGoRiwayat}
-              className="text-[10px] font-black text-orange-500 underline uppercase"
-            >
-              Lihat Semua ↩
-            </button>
-          </div>
-          <div className="space-y-4">
-            {riwayatKonsultasi.length > 0 ? (
-              riwayatKonsultasi.slice(0, 2).map((item) => (
-                <div
-                  key={item.id}
-                  onClick={onGoRiwayat}
-                  className="bg-white p-6 rounded-[30px] shadow-md border border-gray-100 flex justify-between items-center cursor-pointer hover:border-orange-300 transition-all"
-                >
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
-                      {item.tanggal}
-                    </p>
-                    <p className="font-bold text-blue-900 uppercase">
-                      {item.nama_guru || "Guru BK"}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-white px-4 py-1 rounded-full text-[9px] font-black uppercase ${item.status === "Diterima" ? "bg-orange-500" : "bg-blue-600"}`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-300 font-bold italic ml-4 text-sm">
-                Belum ada jadwal...
-              </p>
-            )}
-          </div>
-        </section>
-      </div>
+      {currentPage === "riwayat_laporan" && (
+        <RiwayatLaporan
+          onBack={() => setCurrentPage("beranda")}
+          onLihatDetail={(item: any) => {
+            setSelectedData(item);
+            setCurrentPage("detail_laporan");
+          }}
+        />
+      )}
+
+      {currentPage === "riwayat_konsultasi" && (
+        <RiwayatKonsultasi
+          onBack={() => setCurrentPage("beranda")}
+          onLihatDetail={(item: any) => {
+            setSelectedData(item);
+            setCurrentPage("detail_konsultasi");
+          }}
+        />
+      )}
+
+      {currentPage === "detail_laporan" && (
+        <DetailLaporan
+          onBack={() => {
+            setCurrentPage(
+              user.role === "admin" ? "admin_lihat_laporan" : "riwayat_laporan",
+            );
+          }}
+          selectedData={selectedData}
+        />
+      )}
+
+      {currentPage === "detail_konsultasi" && (
+        <DetailKonsultasi
+          onBack={() => setCurrentPage("riwayat_konsultasi")}
+          selectedData={selectedData}
+        />
+      )}
+
+      {/* --- ROUTING ADMIN --- */}
+      {currentPage === "admin_beranda" && (
+        <BerandaAdmin
+          onLogout={handleLogout}
+          onGoLaporan={() => setCurrentPage("admin_lihat_laporan")}
+          onGoKonsultasi={() => setCurrentPage("admin_lihat_konsultasi")}
+        />
+      )}
+
+      {currentPage === "admin_lihat_laporan" && (
+        <AdminLihatLaporan
+          onBack={() => setCurrentPage("admin_beranda")}
+          onDetail={(item: any) => {
+            setSelectedData(item);
+            setCurrentPage("admin_detail_laporan");
+          }}
+        />
+      )}
+
+      {currentPage === "admin_detail_laporan" && (
+        <AdminDetailLaporan
+          onBack={() => setCurrentPage("admin_lihat_laporan")}
+          selectedData={selectedData}
+        />
+      )}
+
+      {currentPage === "admin_lihat_konsultasi" && (
+        <AdminLihatKonsultasi
+          onBack={() => setCurrentPage("admin_beranda")}
+          onDetail={(item: any) => {
+            setSelectedData(item);
+            setCurrentPage("admin_detail_konsultasi");
+          }}
+        />
+      )}
+
+      {currentPage === "admin_detail_konsultasi" && (
+        <AdminDetailKonsultasi
+          onBack={() => setCurrentPage("admin_lihat_konsultasi")}
+          selectedData={selectedData}
+        />
+      )}
+
+      {/* --- AUTH --- */}
+      {currentPage === "register" && (
+        <Register onSwitch={() => setCurrentPage("login")} />
+      )}
     </div>
   );
 };
 
-export default Beranda;
+export default App;

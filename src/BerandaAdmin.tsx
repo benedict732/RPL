@@ -45,12 +45,10 @@ const BerandaAdmin: React.FC<AdminProps> = ({
 
   return (
     <div className="min-h-screen bg-white font-sans text-left pb-20">
-      {/* NAVBAR */}
       <nav className="flex justify-between items-center px-10 py-6 border-b border-gray-100 bg-white sticky top-0 z-50">
         <h1 className="text-2xl font-black text-blue-900 italic tracking-tighter uppercase">
           SIBY Group
         </h1>
-
         <div className="flex items-center gap-8 font-bold text-sm">
           <button className="text-blue-900 border-b-2 border-blue-900 pb-1 uppercase">
             Beranda
@@ -76,17 +74,15 @@ const BerandaAdmin: React.FC<AdminProps> = ({
         </div>
       </nav>
 
-      {/* HERO SECTION */}
       <div className="mx-10 mt-6 bg-[#1e1b4b] rounded-[40px] py-20 text-center shadow-xl">
         <h2 className="text-4xl font-black text-white mb-2 italic uppercase tracking-tight">
           SISTEM PENGADUAN MASALAH
         </h2>
-        <p className="text-blue-300 font-bold tracking-[0.3em] text-[10px]">
+        <p className="text-white text-300 font-bold tracking-[0.3em] text-[10px]">
           SMP TRIDHARMA MANADO
         </p>
       </div>
 
-      {/* FILTER SECTION */}
       <div className="mx-10 mt-10 flex flex-col md:flex-row items-center justify-between gap-4 p-8 bg-gray-50 rounded-[30px] border border-gray-100 shadow-sm">
         <div className="text-left">
           <h3 className="text-sm font-black text-blue-900 uppercase">
@@ -126,7 +122,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             onChange={(e) => setTahun(Number(e.target.value))}
             className="px-6 py-3 rounded-2xl bg-white border border-gray-200 text-xs font-black uppercase outline-none focus:border-blue-500"
           >
-            {[2024, 2025, 2026, 2027].map((y) => (
+            {[2026, 2027, 2028, 2029, 2030].map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
@@ -135,7 +131,6 @@ const BerandaAdmin: React.FC<AdminProps> = ({
         </div>
       </div>
 
-      {/* 4 PANEL STATISTIK */}
       <div className="mx-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-6">
         <div
           onClick={onGoLaporan}
@@ -148,7 +143,6 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             {stats.totalLaporan}
           </h4>
         </div>
-
         <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col items-center">
           <p className="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest text-center">
             Laporan Selesai
@@ -157,7 +151,6 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             {stats.laporanSelesai}
           </h4>
         </div>
-
         <div
           onClick={onGoKonsultasi}
           className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col items-center cursor-pointer hover:bg-orange-50 transition-all"
@@ -169,7 +162,6 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             {stats.totalKonsultasi}
           </h4>
         </div>
-
         <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col items-center">
           <p className="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest text-center">
             Konsultasi Selesai

@@ -9,7 +9,6 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
   onBack,
   selectedData,
 }) => {
-  // Mengambil status awal dari data yang dipilih
   const [status, setStatus] = useState(selectedData?.status || "TERKIRIM");
   const [loading, setLoading] = useState(false);
 
@@ -27,27 +26,21 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
         },
       );
 
-      const data = await res.json();
-
       if (res.ok) {
         alert("Status Laporan Berhasil Diperbarui!");
         onBack();
       } else {
-        alert(`Gagal: ${data.message || "Terjadi kesalahan server"}`);
+        alert("Gagal memperbarui status.");
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      alert("Kesalahan koneksi ke server. Pastikan backend menyala.");
+      alert("Kesalahan koneksi ke server.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Fungsi untuk menangani URL gambar yang mengandung spasi
   const getImageUrl = (filename: string) => {
-    const baseUrl = "http://localhost:8080/uploads/";
-    // encodeURI akan mengubah spasi menjadi %20 agar browser bisa membaca file
-    return encodeURI(`${baseUrl}${filename}`);
+    return encodeURI(`http://localhost:8080/uploads/${filename}`);
   };
 
   return (
@@ -66,14 +59,13 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
-            {/* Bagian Kiri: Info Pelapor */}
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
                   Pelapor
                 </label>
                 <p className="font-bold text-blue-900 text-lg">
-                  {selectedData?.nama_pelapor || "Siswa"} (
+                  {selectedData?.nama_pelapor || selectedData?.nama} (
                   {selectedData?.kelas || "-"})
                 </p>
               </div>
@@ -87,7 +79,6 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
               </div>
             </div>
 
-            {/* Bagian Kanan: Input Status & Foto */}
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
@@ -113,26 +104,17 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
                   <div className="relative overflow-hidden rounded-3xl border shadow-sm h-44 bg-gray-100">
                     <img
                       src={getImageUrl(selectedData.foto)}
-                      alt="Bukti Laporan"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const parent = e.currentTarget.parentElement;
-                        if (parent && !parent.querySelector(".err-msg")) {
-                          const div = document.createElement("div");
-                          div.className =
-                            "err-msg h-full w-full flex items-center justify-center text-gray-400 text-[10px] font-bold uppercase border-2 border-dashed rounded-3xl text-center px-4";
-                          div.innerText =
-                            "File foto tidak ditemukan / Error Koneksi";
-                          parent.appendChild(div);
-                        }
-                      }}
+                      alt="Bukti"
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() =>
+                        window.open(getImageUrl(selectedData.foto), "_blank")
+                      }
                     />
                   </div>
                 ) : (
                   <div className="h-44 bg-gray-50 rounded-3xl flex items-center justify-center border-2 border-dashed border-gray-200">
                     <span className="text-gray-300 font-bold text-[10px] uppercase">
-                      Tidak ada foto terlampir
+                      Tidak ada foto
                     </span>
                   </div>
                 )}

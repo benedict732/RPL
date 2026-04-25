@@ -23,10 +23,44 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
   }, []);
 
   const handleKirim = async () => {
-    if (!jam) return alert("Pilih jam!");
+    if (!tanggal || !jam)
+      return alert("Pilih tanggal dan jam terlebih dahulu!");
+
+    const dateObj = new Date(tanggal);
+    const day = dateObj.getDay(); // 0 = Minggu, 6 = Sabtu
+
+    // 1. Validasi Hari Kerja (Senin - Jumat)
+    if (day === 0 || day === 6) {
+      alert("Maaf, konsultasi tidak tersedia di hari Sabtu dan Minggu.");
+      return;
+    }
+
+    // 2. Validasi Jam Operasional (07:00 - 15:00)
     const jamTerpilih = parseInt(jam.split(":")[0]);
-    if (jamTerpilih < 8 || jamTerpilih >= 16) {
-      alert("Maaf, layanan konsultasi hanya jam 08.00 - 16.00.");
+    const menitTerpilih = parseInt(jam.split(":")[1]);
+
+    if (
+      jamTerpilih < 7 ||
+      (jamTerpilih === 15 && menitTerpilih > 0) ||
+      jamTerpilih > 15
+    ) {
+      alert(
+        "Maaf, layanan konsultasi hanya tersedia pukul 07:00 - 15:00 WITA.",
+      );
+      return;
+    }
+
+    // 3. Catatan: Untuk tanggal merah (hari libur nasional),
+    // idealnya menggunakan API eksternal atau daftar manual.
+    // Di sini saya tambahkan pengecekan manual untuk hari libur umum.
+    const holidayList = [
+      "2026-05-01", // Contoh: Hari Buruh
+      "2026-05-13", // Contoh: Kenaikan Yesus Kristus
+      "2026-06-01", // Contoh: Hari Lahir Pancasila
+    ];
+
+    if (holidayList.includes(tanggal)) {
+      alert("Maaf, tanggal yang Anda pilih adalah hari libur nasional.");
       return;
     }
 
@@ -78,17 +112,20 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="date"
+              value={tanggal}
               onChange={(e) => setTanggal(e.target.value)}
               className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none"
             />
             <input
               type="time"
+              value={jam}
               onChange={(e) => setJam(e.target.value)}
               className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none"
             />
           </div>
           <textarea
             placeholder="Topik masalah..."
+            value={topik}
             onChange={(e) => setTopik(e.target.value)}
             className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 h-32 outline-none focus:ring-2 focus:ring-blue-500"
           ></textarea>
@@ -100,7 +137,7 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
           </button>
         </div>
         <p className="text-center mt-6 text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">
-          Operasional: 08.00 - 16.00 WITA
+          Operasional: 07.00 - 15.00 WITA (Senin - Jumat)
         </p>
       </div>
     </div>
