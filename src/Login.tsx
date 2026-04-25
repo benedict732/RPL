@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 interface Props {
   onSwitch: () => void;
-  onLogin: () => void;
+  onLogin: (role: string) => void; // Kita tambahkan parameter role di sini
 }
 
 const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
@@ -21,7 +21,8 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
 
       if (data.success) {
         localStorage.setItem("user", JSON.stringify(data.user));
-        onLogin();
+        // Kirim role (siswa/admin) ke App.tsx
+        onLogin(data.user.role);
       } else {
         alert(data.message || "Email atau Password salah!");
       }
@@ -37,7 +38,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 to-black/50 -z-10"></div>
       <div className="bg-white/10 backdrop-blur-md p-8 rounded-[50px] shadow-2xl w-[90%] max-w-[400px] border border-white/20 text-center flex flex-col items-center">
         <div className="mb-6">
-          <h1 className="text-white font-bold text-3xl tracking-tight">
+          <h1 className="text-white font-bold text-3xl tracking-tight italic">
             SIBY Group
           </h1>
           <p className="text-white/60 text-[10px] mt-1 font-semibold uppercase tracking-[0.3em]">
@@ -57,7 +58,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none"
+            className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/30"
             required
           />
           <input
@@ -65,12 +66,12 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none"
+            className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/30"
             required
           />
           <button
             type="submit"
-            className="w-full py-4 mt-4 bg-[#1e1b4b] hover:bg-indigo-900 text-white font-bold rounded-2xl shadow-xl transition-all"
+            className="w-full py-4 mt-4 bg-[#1e1b4b] hover:bg-indigo-900 text-white font-bold rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs"
           >
             Masuk
           </button>

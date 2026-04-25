@@ -1,91 +1,117 @@
 import React from "react";
 
-interface Props {
+interface DetailProps {
   onBack: () => void;
-  selectedData: any;
+  selectedData: any; // Ini data yang dikirim dari App.tsx (handleGoToDetail)
 }
 
-const DetailLaporan: React.FC<Props> = ({ onBack, selectedData }) => {
-  if (!selectedData)
+const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
+  // Jika data belum ada (misal refresh halaman), tampilkan loading
+  if (!selectedData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Memuat data...
+        <p className="font-bold text-blue-900 animate-pulse">Memuat data...</p>
       </div>
     );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 font-sans flex flex-col items-center">
-      <div className="w-full max-w-md">
-        <div className="flex items-center gap-4 mb-8">
+    <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans text-left">
+      <div className="max-w-4xl mx-auto">
+        {/* Header Navigasi */}
+        <div className="flex justify-between items-center mb-10">
           <button
             onClick={onBack}
             className="text-4xl text-blue-900 hover:scale-110 transition-transform"
           >
             ↩
           </button>
-          <h1 className="text-xl font-black text-blue-900 uppercase tracking-tighter">
-            Detail Laporan
-          </h1>
+          <div className="text-right">
+            <h2 className="text-2xl font-black text-blue-900 uppercase italic tracking-tighter">
+              Detail Laporan
+            </h2>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+              ID Kasus: #{selectedData.id}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden border border-gray-100">
-          <div className="bg-blue-900 p-4 text-center">
-            <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
-              Status: {selectedData.status}
-            </span>
-          </div>
-
-          <div className="p-8">
-            <div className="mb-6">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                ID Laporan
-              </p>
-              <p className="text-lg font-black text-blue-900">
-                #LP-{selectedData.id}
-              </p>
+        <div className="bg-white rounded-[50px] shadow-2xl border border-blue-50 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            {/* Sisi Kiri: Info Pelapor & Status */}
+            <div className="p-10 bg-[#1e1b4b] text-white">
+              <div className="space-y-8">
+                <div>
+                  <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-2">
+                    Status Laporan
+                  </label>
+                  <span className="bg-blue-500 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
+                    {selectedData.status}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
+                    Nama Pelapor
+                  </label>
+                  <p className="text-xl font-bold uppercase">
+                    {selectedData.nama || "Siswa"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
+                    Kategori Masalah
+                  </label>
+                  <p className="text-lg font-bold text-orange-400 uppercase italic">
+                    {selectedData.kategori}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
+                    Tanggal Kejadian
+                  </label>
+                  <p className="font-medium">{selectedData.tanggal_lapor}</p>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Sisi Kanan: Deskripsi & Foto */}
+            <div className="p-10 space-y-8">
               <div>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  Tanggal
-                </p>
-                <p className="text-xs font-bold text-gray-700">
-                  {new Date(selectedData.tanggal_lapor).toLocaleDateString(
-                    "id-ID",
-                    { day: "numeric", month: "long", year: "numeric" },
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  Kategori
-                </p>
-                <p className="text-xs font-bold text-red-500 uppercase">
-                  {selectedData.kategori}
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-6 border-t border-gray-100 pt-6">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                Isi Laporan
-              </p>
-              <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                <p className="text-xs text-gray-600 italic">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">
+                  Deskripsi Masalah
+                </label>
+                <div className="bg-gray-50 p-6 rounded-[30px] border border-gray-100 italic text-gray-600 leading-relaxed">
                   "{selectedData.isi_laporan}"
-                </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">
+                  Bukti Foto
+                </label>
+                {selectedData.foto ? (
+                  <div className="rounded-[30px] overflow-hidden border-4 border-gray-50 shadow-lg">
+                    <img
+                      src={`http://localhost:8080/uploads/${selectedData.foto}`}
+                      alt="Bukti Laporan"
+                      className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-32 bg-gray-100 rounded-[30px] flex items-center justify-center border-2 border-dashed border-gray-200">
+                    <p className="text-[10px] font-black text-gray-400 uppercase">
+                      Tidak ada lampiran foto
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-
-            <button
-              onClick={onBack}
-              className="w-full py-4 bg-gray-100 text-gray-400 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all active:scale-95"
-            >
-              Tutup Detail
-            </button>
           </div>
         </div>
+
+        <p className="text-center mt-10 text-[9px] font-black text-gray-300 uppercase tracking-[0.5em]">
+          SIBY Group • Layanan Pengaduan Terpadu
+        </p>
       </div>
     </div>
   );

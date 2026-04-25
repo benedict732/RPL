@@ -2,111 +2,154 @@ import React, { useState } from "react";
 
 interface AdminDetailProps {
   onBack: () => void;
-  selectedData: any; // WAJIB ADA AGAR APP.TSX TIDAK ERROR
+  selectedData: any;
 }
 
 const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
   onBack,
   selectedData,
 }) => {
-  const [status, setStatus] = useState(selectedData?.status || "Terkirim");
+  // Mengambil status awal dari data yang dipilih
+  const [status, setStatus] = useState(selectedData?.status || "TERKIRIM");
+  const [loading, setLoading] = useState(false);
 
-  const handleUpdateStatus = async () => {
+  const handleUpdate = async () => {
+    if (!selectedData?.id) return alert("ID Laporan tidak valid");
+
+    setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8080/api/admin/update-laporan/${selectedData?.id}`,
+        `http://localhost:8080/api/admin/update-laporan/${selectedData.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: status }),
         },
       );
+
+      const data = await res.json();
+
       if (res.ok) {
-        alert("Status berhasil diperbarui!");
+        alert("Status Laporan Berhasil Diperbarui!");
         onBack();
+      } else {
+        alert(`Gagal: ${data.message || "Terjadi kesalahan server"}`);
       }
     } catch (err) {
-      alert("Gagal update status.");
+      console.error("Fetch Error:", err);
+      alert("Kesalahan koneksi ke server. Pastikan backend menyala.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Fungsi untuk menangani URL gambar yang mengandung spasi
+  const getImageUrl = (filename: string) => {
+    const baseUrl = "http://localhost:8080/uploads/";
+    // encodeURI akan mengubah spasi menjadi %20 agar browser bisa membaca file
+    return encodeURI(`${baseUrl}${filename}`);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={onBack}
-            className="text-4xl hover:scale-110 transition-transform text-blue-900"
-          >
-            ↩
-          </button>
-          <div className="text-right">
-            <h1 className="text-xl font-black text-blue-900 tracking-tighter uppercase">
-              SIBY Group
-            </h1>
-            <span className="text-[10px] font-black bg-blue-900 text-white px-3 py-1 rounded-full uppercase tracking-widest">
-              Admin Mode
-            </span>
-          </div>
-        </div>
+        <button
+          onClick={onBack}
+          className="text-4xl mb-6 text-blue-900 hover:scale-110 transition-transform active:scale-90 outline-none"
+        >
+          ↩
+        </button>
 
         <div className="bg-white rounded-[40px] shadow-2xl p-10 border border-gray-100">
-          <h2 className="text-2xl font-black text-blue-900 mb-10 uppercase tracking-tighter border-b pb-4">
-            Update Status Laporan
+          <h2 className="text-2xl font-black text-blue-900 mb-10 uppercase italic border-b pb-4">
+            Kelola Laporan Siswa
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+            {/* Bagian Kiri: Info Pelapor */}
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                  Pelapor
+                </label>
+                <p className="font-bold text-blue-900 text-lg">
+                  {selectedData?.nama_pelapor || "Siswa"} (
+                  {selectedData?.kelas || "-"})
+                </p>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                  Isi Laporan
+                </label>
+                <div className="bg-gray-50 p-6 rounded-3xl italic text-gray-600 text-sm border border-gray-100 leading-relaxed min-h-[100px]">
+                  "{selectedData?.isi_laporan}"
+                </div>
+              </div>
+            </div>
+
+            {/* Bagian Kanan: Input Status & Foto */}
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-                  Nama Pelapor
-                </label>
-                <div className="w-full px-6 py-3 rounded-xl bg-gray-50 border border-gray-200 font-bold text-gray-700 italic">
-                  {selectedData?.nama} - Kelas {selectedData?.kelas}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest block mb-2 underline">
-                  Ubah Status Laporan
+                  Update Status
                 </label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full px-6 py-4 rounded-2xl bg-blue-50 border-2 border-blue-600 font-black text-blue-900 outline-none cursor-pointer shadow-lg transition-all focus:ring-4 focus:ring-blue-100"
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl bg-blue-50 border-2 border-blue-600 font-black text-blue-900 outline-none focus:ring-4 ring-blue-100 transition-all cursor-pointer"
                 >
-                  <option value="Terkirim">Terkirim</option>
-                  <option value="Diterima">Diterima</option>
-                  <option value="Diproses">Diproses</option>
-                  <option value="Selesai">Selesai</option>
+                  <option value="TERKIRIM">TERKIRIM</option>
+                  <option value="DITERIMA">DITERIMA</option>
+                  <option value="DIPROSES">DIPROSES</option>
+                  <option value="SELESAI">SELESAI</option>
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-                Bukti Foto
-              </label>
-              <div className="w-full h-44 border-2 border-dashed border-gray-200 rounded-[30px] flex items-center justify-center bg-gray-50 text-gray-400 font-bold italic text-xs">
-                Gambar_Bukti_Laporan.jpg
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+                  Bukti Foto
+                </label>
+                {selectedData?.foto ? (
+                  <div className="relative overflow-hidden rounded-3xl border shadow-sm h-44 bg-gray-100">
+                    <img
+                      src={getImageUrl(selectedData.foto)}
+                      alt="Bukti Laporan"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const parent = e.currentTarget.parentElement;
+                        if (parent && !parent.querySelector(".err-msg")) {
+                          const div = document.createElement("div");
+                          div.className =
+                            "err-msg h-full w-full flex items-center justify-center text-gray-400 text-[10px] font-bold uppercase border-2 border-dashed rounded-3xl text-center px-4";
+                          div.innerText =
+                            "File foto tidak ditemukan / Error Koneksi";
+                          parent.appendChild(div);
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-44 bg-gray-50 rounded-3xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                    <span className="text-gray-300 font-bold text-[10px] uppercase">
+                      Tidak ada foto terlampir
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-
-          <div className="mb-10">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-              Deskripsi Laporan
-            </label>
-            <div className="w-full px-8 py-6 rounded-[30px] bg-gray-50 border border-gray-200 text-sm text-gray-600 leading-relaxed italic">
-              "{selectedData?.isi_laporan}"
             </div>
           </div>
 
           <button
-            onClick={handleUpdateStatus}
-            className="w-full mt-10 py-4 bg-blue-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition-all active:scale-95"
+            onClick={handleUpdate}
+            disabled={loading}
+            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-900 text-white hover:bg-blue-800"
+            }`}
           >
-            Simpan Perubahan
+            {loading ? "Sedang Memproses..." : "Simpan Perubahan Status"}
           </button>
         </div>
       </div>

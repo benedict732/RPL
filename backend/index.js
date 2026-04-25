@@ -10,77 +10,37 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Pastikan folder uploads ada, jika tidak, buat otomatis
+// 1. Konfigurasi Folder Uploads (untuk foto bukti)
 const uploadDir = "./uploads";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
-
-// Konfigurasi akses file statis agar foto bisa dipanggil di frontend
 app.use("/uploads", express.static("uploads"));
 
-// Konfigurasi Multer untuk penyimpanan file
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    // Nama file unik: timestamp + ekstensi asli
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
+const upload = multer({ storage: storage });
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Batas 5MB
-});
-
+// 2. Koneksi Database
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASS || "",
+  database: process.env.DB_NAME || "dbtridharma",
 });
 
 db.connect((err) => {
   if (err) return console.error("Koneksi Gagal:", err);
-  console.log(
-    `✅ Database ${process.env.DB_NAME} Siap Tempur dengan Fitur Upload!`,
-  );
+  console.log(`✅ Server & Database AKTIF!`);
 });
 
-// --- API LAPORAN (DENGAN UPLOAD FOTO) ---
-app.post("/api/laporan", upload.single("foto"), (req, res) => {
-  const { id_siswa, kategori, isi_laporan, tanggal_lapor } = req.body;
-  const foto = req.file ? req.file.filename : null;
-
-  const sql =
-    "INSERT INTO laporan (id_siswa, kategori, isi_laporan, tanggal_lapor, foto, status) VALUES (?, ?, ?, ?, ?, 'Terkirim')";
-  db.query(
-    sql,
-    [id_siswa, kategori, isi_laporan, tanggal_lapor, foto],
-    (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ success: false });
-      }
-      res.json({ success: true });
-    },
-  );
-});
-
-// --- API AUTH, GURU, & KONSULTASI (TETAP SAMA) ---
-app.post("/api/register", (req, res) => {
-  const { nama, email, password, kelas } = req.body;
-  db.query(
-    "INSERT INTO users (nama, email, password, kelas, role) VALUES (?, ?, ?, ?, 'siswa')",
-    [nama, email, password, kelas],
-    (err) => {
-      if (err) res.json({ success: false });
-      else res.json({ success: true });
-    },
-  );
-});
+// --- [ AUTH SECTION ] ---
 
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
@@ -88,38 +48,151 @@ app.post("/api/login", (req, res) => {
     "SELECT * FROM users WHERE email = ? AND password = ?",
     [email, password],
     (err, result) => {
-      if (result.length > 0) res.json({ success: true, user: result[0] });
-      else res.json({ success: false, message: "Email/Password salah" });
+      if (err) return res.status(500).send(err);
+      if (result.length > 0) {
+        res.json({ success: true, user: result[0] });
+      } else {
+        res.json({ success: false, message: "Email atau Password salah!" });
+      }
     },
   );
 });
 
-app.get("/api/guru", (req, res) => {
-  db.query("SELECT * FROM guru", (err, result) => res.json(result));
+app.post("/api/register", (req, res) => {
+  const { nama, email, password, kelas } = req.body;
+  const role = "siswa";
+  db.query(
+    "INSERT INTO users (nama, email, password, kelas, role) VALUES (?, ?, ?, ?, ?)",
+    [nama, email, password, kelas, role],
+    (err) => {
+      if (err) return res.status(500).json({ success: false, err });
+      res.json({ success: true });
+    },
+  );
 });
 
-app.get("/api/admin/laporan", (req, res) => {
+// --- [ FITUR LAPORAN SISWA ] ---
+
+app.post("/api/laporan", upload.single("foto"), (req, res) => {
+  const { id_siswa, kategori, isi_laporan } = req.body;
+  const foto = req.file ? req.file.filename : null;
+  const tanggal = new Date().toISOString().split("T")[0];
+
   db.query(
-    "SELECT l.*, u.nama, u.kelas FROM laporan l JOIN users u ON l.id_siswa = u.id ORDER BY l.id DESC",
-    (err, result) => res.json(result),
+    "INSERT INTO laporan (id_siswa, kategori, isi_laporan, foto, tanggal_lapor, status) VALUES (?, ?, ?, ?, ?, 'Terkirim')",
+    [id_siswa, kategori, isi_laporan, foto, tanggal],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ success: true });
+    },
   );
+});
+
+app.get("/api/laporan/user/:id_siswa", (req, res) => {
+  db.query(
+    "SELECT * FROM laporan WHERE id_siswa = ? ORDER BY id DESC",
+    [req.params.id_siswa],
+    (err, result) => {
+      if (err) return res.status(500).json(err);
+      res.json(result);
+    },
+  );
+});
+
+// --- [ FITUR KONSULTASI SISWA ] ---
+
+app.get("/api/guru", (req, res) => {
+  db.query("SELECT * FROM guru", (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
 });
 
 app.post("/api/konsultasi", (req, res) => {
   const { id_siswa, id_guru, tanggal, jam, topik } = req.body;
   db.query(
-    "INSERT INTO konsultasi (id_siswa, id_guru, tanggal, jam, topik, status) VALUES (?,?,?,?,?,'Terkirim')",
+    "INSERT INTO konsultasi (id_siswa, id_guru, tanggal, jam, topik, status) VALUES (?, ?, ?, ?, ?, 'Terkirim')",
     [id_siswa, id_guru, tanggal, jam, topik],
-    () => res.json({ success: true }),
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ success: true });
+    },
   );
 });
 
+// ROUTE INI YANG TADI 404 (PENTING!)
 app.get("/api/riwayat/:id_siswa", (req, res) => {
+  const sql = `
+    SELECT k.*, g.nama_guru 
+    FROM konsultasi k 
+    JOIN guru g ON k.id_guru = g.id_guru 
+    WHERE k.id_siswa = ? 
+    ORDER BY k.id DESC
+  `;
+  db.query(sql, [req.params.id_siswa], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+});
+
+// --- [ FITUR ADMIN ] ---
+
+// Ambil semua laporan untuk admin
+app.get("/api/admin/laporan", (req, res) => {
+  const sql = `
+    SELECT l.*, u.nama, u.kelas 
+    FROM laporan l 
+    JOIN users u ON l.id_siswa = u.id 
+    ORDER BY l.id DESC
+  `;
+  db.query(sql, (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+});
+
+// Update status laporan
+app.put("/api/admin/update-laporan/:id", (req, res) => {
+  const { status } = req.body;
   db.query(
-    "SELECT k.*, g.nama_guru FROM konsultasi k JOIN guru g ON k.id_guru = g.id_guru WHERE k.id_siswa = ? ORDER BY k.id DESC",
-    [req.params.id_siswa],
-    (err, result) => res.json(result),
+    "UPDATE laporan SET status = ? WHERE id = ?",
+    [status, req.params.id],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ success: true });
+    },
   );
 });
 
-app.listen(8080, () => console.log(`🚀 Server Berjalan di Port 8080`));
+// Ambil semua permintaan konsultasi untuk admin
+app.get("/api/admin/konsultasi", (req, res) => {
+  const sql = `
+    SELECT k.*, u.nama as nama_siswa, u.kelas, g.nama_guru 
+    FROM konsultasi k 
+    JOIN users u ON k.id_siswa = u.id 
+    JOIN guru g ON k.id_guru = g.id_guru 
+    ORDER BY k.id DESC
+  `;
+  db.query(sql, (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+});
+
+// Update detail konsultasi (Link Zoom, Jam Fix, Pesan)
+app.put("/api/admin/update-konsultasi/:id", (req, res) => {
+  const { jam, link_zoom, pesan_admin, status } = req.body;
+  db.query(
+    "UPDATE konsultasi SET jam = ?, link_zoom = ?, pesan_admin = ?, status = ? WHERE id = ?",
+    [jam, link_zoom, pesan_admin, status, req.params.id],
+    (err) => {
+      if (err) return res.status(500).json(err);
+      res.json({ success: true });
+    },
+  );
+});
+
+const PORT = 8080;
+app.listen(PORT, () => {
+  console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
+});
