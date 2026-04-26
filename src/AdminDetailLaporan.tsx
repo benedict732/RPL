@@ -55,14 +55,14 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
 
         <div className="bg-white rounded-[40px] shadow-2xl p-10 border border-gray-100">
           <h2 className="text-2xl font-black text-blue-900 mb-10 uppercase italic border-b pb-4">
-            Kelola Laporan Siswa
+            Kelola Pengaduan Siswa
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
-                  Pelapor
+                  Pengadu
                 </label>
                 <p className="font-bold text-blue-900 text-lg">
                   {selectedData?.nama_pelapor || selectedData?.nama} (
@@ -71,7 +71,7 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
-                  Isi Laporan
+                  Deskripsi
                 </label>
                 <div className="bg-gray-50 p-6 rounded-3xl italic text-gray-600 text-sm border border-gray-100 leading-relaxed min-h-[100px]">
                   "{selectedData?.isi_laporan}"
@@ -82,7 +82,7 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-                  Update Status
+                  Progres
                 </label>
                 <select
                   value={status}

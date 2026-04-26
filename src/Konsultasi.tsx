@@ -13,6 +13,9 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
   const [jam, setJam] = useState("");
   const [topik, setTopik] = useState("");
 
+  // Mendapatkan tanggal hari ini dalam format YYYY-MM-DD untuk membatasi kalender
+  const today = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     fetch("http://localhost:8080/api/guru")
       .then((res) => res.json())
@@ -50,14 +53,8 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
       return;
     }
 
-    // 3. Catatan: Untuk tanggal merah (hari libur nasional),
-    // idealnya menggunakan API eksternal atau daftar manual.
-    // Di sini saya tambahkan pengecekan manual untuk hari libur umum.
-    const holidayList = [
-      "2026-05-01", // Contoh: Hari Buruh
-      "2026-05-13", // Contoh: Kenaikan Yesus Kristus
-      "2026-06-01", // Contoh: Hari Lahir Pancasila
-    ];
+    // 3. Daftar Hari Libur Nasional (Manual)
+    const holidayList = ["2026-05-01", "2026-05-13", "2026-06-01"];
 
     if (holidayList.includes(tanggal)) {
       alert("Maaf, tanggal yang Anda pilih adalah hari libur nasional.");
@@ -110,9 +107,11 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
+            {/* PERBAIKAN: Menambahkan properti min agar tanggal lalu tidak bisa diklik */}
             <input
               type="date"
               value={tanggal}
+              min={today}
               onChange={(e) => setTanggal(e.target.value)}
               className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none"
             />

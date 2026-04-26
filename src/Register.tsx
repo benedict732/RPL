@@ -53,19 +53,33 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
               required
             />
           </div>
+
+          {/* PERBAIKAN: Input Kelas diganti menjadi Select agar hanya 7-9 */}
           <div className="space-y-1">
             <label className="text-white/80 text-xs font-semibold ml-4">
               Kelas
             </label>
-            <input
-              type="text"
-              placeholder="Kelas"
+            <select
               value={kelas}
               onChange={(e) => setKelas(e.target.value)}
-              className="w-full px-6 py-3.5 rounded-2xl bg-white/20 text-white placeholder-white/30 outline-none focus:ring-2 focus:ring-blue-400/50 transition-all"
+              className="w-full px-6 py-3.5 rounded-2xl bg-white/20 text-white outline-none focus:ring-2 focus:ring-blue-400/50 transition-all appearance-none cursor-pointer"
               required
-            />
+            >
+              <option value="" disabled className="bg-indigo-900">
+                Pilih Kelas
+              </option>
+              <option value="7" className="bg-indigo-900">
+                Kelas 7
+              </option>
+              <option value="8" className="bg-indigo-900">
+                Kelas 8
+              </option>
+              <option value="9" className="bg-indigo-900">
+                Kelas 9
+              </option>
+            </select>
           </div>
+
           <div className="space-y-1">
             <label className="text-white/80 text-xs font-semibold ml-4">
               Email

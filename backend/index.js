@@ -5,10 +5,20 @@ import cors from "cors";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import nodemailer from "nodemailer";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// --- [ CONFIG NODEMAILER ] ---
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "smptridharmamanado7@gmail.com",
+    pass: "kkupruitgvejybis",
+  },
+});
 
 // 1. Konfigurasi Folder Uploads
 const uploadDir = "./uploads";
@@ -130,13 +140,15 @@ app.get("/api/riwayat/:id_siswa", (req, res) => {
 
 // --- [ ADMIN SECTION ] ---
 
-// Perbaikan Endpoint Stats agar tidak crash saat data null
 app.get("/api/admin/stats", (req, res) => {
   const { bulan, tahun } = req.query;
+
+  // PERBAIKAN: Pastikan status menggunakan 'SELESAI' (Huruf Kapital) sesuai database
   const qL =
     "SELECT COUNT(*) as total, SUM(status='SELESAI') as selesai FROM laporan WHERE MONTH(tanggal_lapor) = ? AND YEAR(tanggal_lapor) = ?";
+
   const qK =
-    "SELECT COUNT(*) as total, SUM(status='Selesai') as selesai FROM konsultasi WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ?";
+    "SELECT COUNT(*) as total, SUM(status='SELESAI') as selesai FROM konsultasi WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ?";
 
   db.query(qL, [bulan, tahun], (err, resL) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -144,7 +156,6 @@ app.get("/api/admin/stats", (req, res) => {
     db.query(qK, [bulan, tahun], (err, resK) => {
       if (err) return res.status(500).json({ error: err.message });
 
-      // Ambil data dengan aman (default ke 0 jika null)
       const dataLapor = resL[0] || { total: 0, selesai: 0 };
       const dataKonsul = resK[0] || { total: 0, selesai: 0 };
 
@@ -152,7 +163,7 @@ app.get("/api/admin/stats", (req, res) => {
         totalLaporan: dataLapor.total || 0,
         laporanSelesai: dataLapor.selesai || 0,
         totalKonsultasi: dataKonsul.total || 0,
-        konsultasiSelesai: dataKonsul.selesai || 0,
+        konsultasiSelesai: dataKonsul.selesai || 0, // PERBAIKAN: Typo diperbaiki dari 'consultasiSelesai'
       });
     });
   });
@@ -167,16 +178,46 @@ app.get("/api/admin/laporan", (req, res) => {
   });
 });
 
+// UPDATE LAPORAN + EMAIL
 app.put("/api/admin/update-laporan/:id", (req, res) => {
   const { status } = req.body;
-  db.query(
-    "UPDATE laporan SET status = ? WHERE id = ?",
-    [status, req.params.id],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true });
-    },
-  );
+  const { id } = req.params;
+
+  const sqlGetEmail =
+    "SELECT u.email, u.nama, l.kategori FROM laporan l JOIN users u ON l.id_siswa = u.id WHERE l.id = ?";
+
+  db.query(sqlGetEmail, [id], (err, userData) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    db.query(
+      "UPDATE laporan SET status = ? WHERE id = ?",
+      [status, id],
+      (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (userData.length > 0) {
+          const { email, nama, kategori } = userData[0];
+          const mailOptions = {
+            from: '"SIBY Group Support" <smptridharmamanado7@gmail.com>',
+            to: email,
+            subject: `Update Status Laporan - ${kategori}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #1e3a8a;">Halo ${nama},</h2>
+                <p>Laporan Anda mengenai <b>${kategori}</b> telah diperbarui.</p>
+                <p>Status terbaru: <span style="background: #1e3a8a; color: white; padding: 5px 10px; border-radius: 5px;">${status}</span></p>
+                <p>Silakan cek aplikasi untuk detail lebih lanjut.</p>
+                <hr />
+                <p style="font-size: 10px; color: #888;">Pesan otomatis dari SIBY Group - SMP Tridharma Manado</p>
+              </div>
+            `,
+          };
+          transporter.sendMail(mailOptions);
+        }
+        res.json({ success: true });
+      },
+    );
+  });
 });
 
 app.get("/api/admin/konsultasi", (req, res) => {
@@ -188,16 +229,50 @@ app.get("/api/admin/konsultasi", (req, res) => {
   });
 });
 
+// UPDATE KONSULTASI + EMAIL
 app.put("/api/admin/update-konsultasi/:id", (req, res) => {
   const { jam, link_zoom, pesan_admin, status } = req.body;
-  db.query(
-    "UPDATE konsultasi SET jam = ?, link_zoom = ?, pesan_admin = ?, status = ? WHERE id = ?",
-    [jam, link_zoom, pesan_admin, status, req.params.id],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true });
-    },
-  );
+  const { id } = req.params;
+
+  const sqlGetEmail =
+    "SELECT u.email, u.nama, g.nama_guru FROM konsultasi k JOIN users u ON k.id_siswa = u.id JOIN guru g ON k.id_guru = g.id_guru WHERE k.id = ?";
+
+  db.query(sqlGetEmail, [id], (err, userData) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    db.query(
+      "UPDATE konsultasi SET jam = ?, link_zoom = ?, pesan_admin = ?, status = ? WHERE id = ?",
+      [jam, link_zoom, pesan_admin, status, id],
+      (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (userData.length > 0) {
+          const { email, nama, nama_guru } = userData[0];
+          const mailOptions = {
+            from: '"SIBY Group Support" <smptridharmamanado7@gmail.com>',
+            to: email,
+            subject: `Update Jadwal Konsultasi - ${nama_guru}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #1e3a8a;">Halo ${nama},</h2>
+                <p>Jadwal konsultasi kamu dengan <b>${nama_guru}</b> telah diperbarui.</p>
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #1e3a8a;">
+                  <p><b>Status:</b> ${status}</p>
+                  <p><b>Jam:</b> ${jam} WITA</p>
+                  <p><b>Link Pertemuan:</b> <a href="${link_zoom}">${link_zoom}</a></p>
+                </div>
+                <p><b>Pesan Admin:</b> <i>"${pesan_admin || "-"}"</i></p>
+                <hr />
+                <p style="font-size: 10px; color: #888;">Pesan otomatis dari SIBY Group - SMP Tridharma Manado</p>
+              </div>
+            `,
+          };
+          transporter.sendMail(mailOptions);
+        }
+        res.json({ success: true });
+      },
+    );
+  });
 });
 
 const PORT = 8080;

@@ -48,9 +48,9 @@ const AdminLihatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
           <thead>
             <tr className="bg-[#1e1b4b] text-white uppercase text-[10px] tracking-widest font-black">
               <th className="px-8 py-6">Siswa</th>
-              <th className="px-8 py-6">Guru Tujuan</th>
+              <th className="px-8 py-6">Guru</th>
               <th className="px-8 py-6">Waktu</th>
-              <th className="px-8 py-6 text-center">Aksi</th>
+              <th className="px-8 py-6 text-center">Progres</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

@@ -97,7 +97,7 @@ const Beranda: React.FC<Props> = ({
           onClick={onTambahLaporan}
           className="bg-blue-500 text-white font-black px-10 py-4 rounded-2xl shadow-lg uppercase text-sm hover:bg-blue-400 active:scale-95 transition-all"
         >
-          Laporkan Sekarang!
+          BUAT PENGADUAN!
         </button>
       </div>
 
@@ -105,7 +105,7 @@ const Beranda: React.FC<Props> = ({
         <section>
           <div className="flex justify-between items-center mb-6 border-l-4 border-blue-500 pl-4">
             <h3 className="text-xl font-black text-blue-900 uppercase italic">
-              Riwayat Laporan
+              Riwayat Pengaduan
             </h3>
             <button
               onClick={onGoRiwayatLapor}

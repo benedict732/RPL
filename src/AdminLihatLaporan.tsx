@@ -9,11 +9,9 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
   const [laporan, setLaporan] = useState<any[]>([]);
 
   useEffect(() => {
-    // Memastikan pengambilan data dari endpoint admin yang benar
     fetch("http://localhost:8080/api/admin/laporan")
       .then((res) => res.json())
       .then((data) => {
-        // Validasi agar data selalu berupa Array untuk mencegah error .map()
         setLaporan(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
@@ -22,11 +20,25 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
       });
   }, []);
 
+  // FUNGSI BARU: Menentukan warna berdasarkan status
+  const getStatusColor = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "TERKIRIM":
+        return "bg-orange-500"; // Oranye untuk laporan baru
+      case "DIPROSES":
+        return "bg-blue-500"; // Biru untuk sedang dikerjakan
+      case "SELESAI":
+        return "bg-green-500"; // Hijau untuk laporan tuntas
+      default:
+        return "bg-slate-500"; // Abu-abu untuk lainnya
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-10 font-sans text-left">
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-4xl font-black text-blue-900 italic uppercase">
-          Panel Laporan
+          Panel Pengaduan
         </h1>
         <button
           onClick={onBack}
@@ -40,10 +52,10 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
         <table className="w-full text-left">
           <thead>
             <tr className="bg-blue-900 text-white uppercase text-[10px] tracking-widest font-black">
-              <th className="px-8 py-6">Pelapor</th>
+              <th className="px-8 py-6">Pengadu</th>
               <th className="px-8 py-6">Kategori</th>
               <th className="px-8 py-6">Status</th>
-              <th className="px-8 py-6 text-center">Aksi</th>
+              <th className="px-8 py-6 text-center">Progres</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -54,7 +66,6 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
                   className="hover:bg-blue-50/50 transition-all"
                 >
                   <td className="px-8 py-6">
-                    {/* Menggunakan nama_pelapor sesuai hasil JOIN di backend */}
                     <p className="font-bold text-blue-900">
                       {item.nama_pelapor || "Anonim"}
                     </p>
@@ -68,7 +79,10 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="bg-orange-500 text-white px-4 py-1 rounded-full text-[9px] font-black uppercase">
+                    {/* PERBAIKAN: Warna status sekarang dinamis mengikuti fungsi getStatusColor */}
+                    <span
+                      className={`${getStatusColor(item.status)} text-white px-4 py-1 rounded-full text-[9px] font-black uppercase`}
+                    >
                       {item.status}
                     </span>
                   </td>

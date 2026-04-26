@@ -86,13 +86,13 @@ const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
       <div className="flex-grow flex justify-center items-center p-6">
         <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl border border-blue-100 p-10">
           <h1 className="text-3xl font-black text-center mb-10 text-blue-900 tracking-tight italic uppercase">
-            Formulir Pelaporan
+            Formulir Pengaduan
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-black text-gray-400 uppercase ml-1 tracking-widest">
-                  Nama Pelapor
+                  Nama Pengadu
                 </label>
                 <input
                   type="text"
@@ -175,13 +175,13 @@ const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
               onClick={handleSimpanDraft}
               className="flex-1 py-4 bg-blue-500 text-white font-black rounded-2xl shadow-lg uppercase text-sm tracking-widest transition-all active:scale-95 hover:bg-blue-600"
             >
-              SIMPAN DRAF
+              DRAF
             </button>
             <button
               onClick={handleKirimLaporan}
               className="flex-1 py-4 bg-[#1e1b4b] text-white font-black rounded-2xl shadow-lg uppercase text-sm tracking-widest transition-all active:scale-95 hover:bg-black"
             >
-              KIRIM LAPORAN
+              KIRIM
             </button>
           </div>
         </div>

@@ -57,7 +57,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             onClick={onGoLaporan}
             className="text-gray-400 hover:text-blue-900 uppercase transition-colors"
           >
-            Laporan
+            Pengaduan
           </button>
           <button
             onClick={onGoKonsultasi}
@@ -137,7 +137,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
           className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col items-center cursor-pointer hover:bg-blue-50 transition-all"
         >
           <p className="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest text-center">
-            Total Laporan
+            Total Pengaduan
           </p>
           <h4 className="text-4xl font-black text-blue-900">
             {stats.totalLaporan}
@@ -145,7 +145,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
         </div>
         <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col items-center">
           <p className="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest text-center">
-            Laporan Selesai
+            Pengaduan Selesai
           </p>
           <h4 className="text-4xl font-black text-green-500">
             {stats.laporanSelesai}

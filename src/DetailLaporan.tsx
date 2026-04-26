@@ -40,7 +40,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
           </button>
           <div className="text-right">
             <h2 className="text-2xl font-black text-blue-900 uppercase italic tracking-tighter">
-              Detail Laporan
+              Detail Pengaduan
             </h2>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
               ID Kasus: #{selectedData.id}
@@ -54,7 +54,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
               <div className="space-y-8">
                 <div>
                   <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-2">
-                    Status Laporan
+                    Status Pengaduan
                   </label>
                   <span className="bg-blue-500 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
                     {selectedData.status}
@@ -78,7 +78,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
-                    Tanggal Kejadian
+                    Dibuat
                   </label>
                   {/* PERBAIKAN DI SINI: Memanggil fungsi formatTanggal */}
                   <p className="font-medium">
