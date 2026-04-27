@@ -6,191 +6,136 @@ interface Props {
 }
 
 const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
-  // State untuk menampung perubahan input dari admin
-  const [fixJam, setFixJam] = useState(selectedData?.jam || "");
-  const [linkMeeting, setLinkMeeting] = useState(selectedData?.link_zoom || "");
-  const [catatan, setCatatan] = useState(selectedData?.pesan_admin || "");
+  const [jam, setJam] = useState(selectedData?.jam || "");
+  const [linkZoom, setLinkZoom] = useState(selectedData?.link_zoom || "");
+  const [pesan, setPesan] = useState(selectedData?.pesan_admin || "");
+  const [status, setStatus] = useState(selectedData?.status || "MENUNGGU");
   const [loading, setLoading] = useState(false);
 
-  // FUNGSI 1: Simpan & Kirim (Status jadi Diterima)
-  const handleSimpan = async () => {
-    if (!selectedData?.id) return alert("ID Konsultasi tidak ditemukan!");
+  // --- [ PENGECEKAN ROLE TANPA UBAH DESAIN ] ---
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isKepsek = user.role === "kepala sekolah";
+
+  const handleUpdate = async () => {
+    if (isKepsek) return; // Mencegah eksekusi jika role kepsek
+
     setLoading(true);
     try {
-      const response = await fetch(
+      const res = await fetch(
         `http://localhost:8080/api/admin/update-konsultasi/${selectedData.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            jam: fixJam,
-            link_zoom: linkMeeting,
-            pesan_admin: catatan,
-            status: "Diterima", // Status saat admin memproses jadwal
+            jam,
+            link_zoom: linkZoom,
+            pesan_admin: pesan,
+            status,
           }),
         },
       );
-
-      if (response.ok) {
-        alert("Jadwal Berhasil Dikirim ke Siswa!");
+      if (res.ok) {
+        alert("Data Konsultasi Berhasil Diperbarui!");
         onBack();
       }
-    } catch (error) {
-      alert("Gagal memperbarui jadwal.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // FUNGSI 2: Selesaikan Sesi (Status jadi Selesai agar masuk statistik)
-  const handleSelesaikan = async () => {
-    if (
-      !window.confirm("Apakah sesi konsultasi ini sudah benar-benar selesai?")
-    )
-      return;
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/admin/update-konsultasi/${selectedData.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jam: fixJam,
-            link_zoom: linkMeeting,
-            pesan_admin: catatan,
-            status: "Selesai", // Status FINAL untuk statistik
-          }),
-        },
-      );
-
-      if (response.ok) {
-        alert("Konsultasi Berhasil Diselesaikan & Diarsipkan!");
-        onBack();
-      }
-    } catch (error) {
-      alert("Gagal menyelesaikan sesi.");
+    } catch (err) {
+      alert("Gagal terhubung ke server");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans text-left">
-      <div className="max-w-3xl mx-auto bg-white rounded-[40px] shadow-2xl border border-orange-100 overflow-hidden">
-        {/* Header Panel */}
-        <div className="bg-[#1e1b4b] p-10 text-white flex justify-between items-start">
-          <div>
-            <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">
-              Proses Konsultasi
-            </h2>
-            <p className="text-orange-400 text-[10px] font-black uppercase tracking-[0.3em]">
-              Manajemen Jadwal Siswa
-            </p>
-          </div>
-          <button
-            onClick={onBack}
-            className="text-2xl hover:scale-125 transition-transform"
-          >
-            ✕
+    <div className="min-h-screen bg-gray-50 p-6 font-sans flex items-center justify-center">
+      <div className="max-w-md w-full bg-white rounded-[40px] shadow-2xl p-10 border border-blue-50">
+        <div className="flex items-center gap-4 mb-8 text-left">
+          <button onClick={onBack} className="text-4xl text-blue-900">
+            ↩
           </button>
+          <h1 className="text-xl font-black text-blue-900 uppercase">
+            Detail Konsultasi
+          </h1>
         </div>
 
-        <div className="p-10 space-y-8">
-          {/* Info Siswa & Guru */}
-          <div className="grid grid-cols-2 gap-6 pb-8 border-b border-gray-100">
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
-                Nama Siswa
-              </label>
-              <p className="font-bold text-blue-900 text-lg uppercase">
-                {selectedData?.nama || "Siswa"}
+        <div className="space-y-5 text-left">
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+              Siswa & Guru
+            </label>
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <p className="font-bold text-blue-900 text-sm">
+                {selectedData?.nama} ({selectedData?.kelas})
               </p>
-              <p className="text-xs text-gray-400 font-bold italic">
-                Kelas {selectedData?.kelas || "9"}
-              </p>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
-                Guru Tujuan
-              </label>
-              <p className="font-black text-orange-500 text-lg uppercase">
-                {selectedData?.nama_guru}
+              <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">
+                Guru: {selectedData?.nama_guru}
               </p>
             </div>
           </div>
 
-          {/* Form Input Admin */}
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-                  Atur Jam Mulai (WITA)
-                </label>
-                <input
-                  type="time"
-                  value={fixJam}
-                  onChange={(e) => setFixJam(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-blue-900 outline-none focus:ring-4 focus:ring-blue-100 transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-                  Link Meeting (Zoom/G-Meet)
-                </label>
-                <input
-                  type="text"
-                  value={linkMeeting}
-                  onChange={(e) => setLinkMeeting(e.target.value)}
-                  placeholder="https://zoom.us/j/..."
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none focus:ring-4 focus:ring-blue-100 transition-all"
-                />
-              </div>
-            </div>
-
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
-                Pesan / Catatan Untuk Siswa
+              <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
+                Jam
               </label>
-              <textarea
-                value={catatan}
-                onChange={(e) => setCatatan(e.target.value)}
-                placeholder="Berikan instruksi tambahan atau alasan perubahan jam..."
-                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 italic outline-none focus:ring-4 focus:ring-blue-100 transition-all h-24 resize-none"
-              ></textarea>
+              <input
+                type="time"
+                value={jam}
+                disabled={isKepsek}
+                onChange={(e) => setJam(e.target.value)}
+                className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none disabled:opacity-50"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-gray-400 uppercase ml-1">
+                Status
+              </label>
+              <select
+                value={status}
+                disabled={isKepsek}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none disabled:opacity-50"
+              >
+                <option value="MENUNGGU">MENUNGGU</option>
+                <option value="DITERIMA">DITERIMA</option>
+                <option value="SELESAI">SELESAI</option>
+                <option value="DITOLAK">DITOLAK</option>
+              </select>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-3 pt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={onBack}
-                className="py-4 bg-gray-100 text-gray-400 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSimpan}
-                disabled={loading}
-                className="py-4 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all active:scale-95 disabled:bg-gray-300"
-              >
-                {loading ? "Menyimpan..." : "Simpan & Kirim"}
-              </button>
-            </div>
+          <input
+            type="text"
+            placeholder="Link Zoom"
+            value={linkZoom}
+            disabled={isKepsek}
+            onChange={(e) => setLinkZoom(e.target.value)}
+            className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 outline-none disabled:opacity-50"
+          />
 
-            {/* Tombol khusus untuk merubah status ke Selesai */}
-            {(selectedData.status === "Diterima" ||
-              selectedData.status === "Selesai") && (
-              <button
-                onClick={handleSelesaikan}
-                disabled={loading}
-                className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-green-100 hover:bg-green-700 transition-all active:scale-95 flex items-center justify-center gap-2"
-              >
-                <span>✓</span> Tandai Sebagai Selesai
-              </button>
-            )}
-          </div>
+          <textarea
+            placeholder="Pesan admin..."
+            value={pesan}
+            disabled={isKepsek}
+            onChange={(e) => setPesan(e.target.value)}
+            className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 h-24 outline-none disabled:opacity-50"
+          ></textarea>
+
+          {/* Kondisi Tombol: Jika Kepsek, ganti teks atau beri info tanpa ubah gaya tombol */}
+          <button
+            onClick={handleUpdate}
+            disabled={loading || isKepsek}
+            className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition-all ${
+              isKepsek
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : "bg-blue-900 text-white active:scale-95 hover:bg-black"
+            }`}
+          >
+            {isKepsek
+              ? "Monitoring"
+              : loading
+                ? "Loading..."
+                : "Simpan Perubahan"}
+          </button>
         </div>
       </div>
     </div>

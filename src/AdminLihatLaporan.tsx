@@ -8,6 +8,9 @@ interface Props {
 const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
   const [laporan, setLaporan] = useState<any[]>([]);
 
+  // Mengambil data user untuk pengecekan role
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   useEffect(() => {
     fetch("http://localhost:8080/api/admin/laporan")
       .then((res) => res.json())
@@ -20,17 +23,16 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
       });
   }, []);
 
-  // FUNGSI BARU: Menentukan warna berdasarkan status
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case "TERKIRIM":
-        return "bg-orange-500"; // Oranye untuk laporan baru
+        return "bg-orange-500";
       case "DIPROSES":
-        return "bg-blue-500"; // Biru untuk sedang dikerjakan
+        return "bg-blue-500";
       case "SELESAI":
-        return "bg-green-500"; // Hijau untuk laporan tuntas
+        return "bg-green-500";
       default:
-        return "bg-slate-500"; // Abu-abu untuk lainnya
+        return "bg-slate-500";
     }
   };
 
@@ -79,7 +81,6 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    {/* PERBAIKAN: Warna status sekarang dinamis mengikuti fungsi getStatusColor */}
                     <span
                       className={`${getStatusColor(item.status)} text-white px-4 py-1 rounded-full text-[9px] font-black uppercase`}
                     >
@@ -87,12 +88,22 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
                     </span>
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <button
-                      onClick={() => onDetail(item)}
-                      className="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-[10px] uppercase shadow-md active:scale-95 transition-all"
-                    >
-                      Detail
-                    </button>
+                    {/* LOGIKA PERBAIKAN: Membedakan tampilan tombol untuk Kepsek */}
+                    {user.role === "kepala sekolah" ? (
+                      <button
+                        onClick={() => onDetail(item)}
+                        className="bg-slate-400 text-white px-6 py-2 rounded-xl font-bold text-[10px] uppercase shadow-md active:scale-95 transition-all"
+                      >
+                        Lihat
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onDetail(item)}
+                        className="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold text-[10px] uppercase shadow-md active:scale-95 transition-all"
+                      >
+                        Detail
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

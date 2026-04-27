@@ -83,7 +83,7 @@ app.post("/api/register", (req, res) => {
   );
 });
 
-// --- [ LAPORAN ] ---
+// --- [ PENGADUAN ] ---
 app.post("/api/laporan", upload.single("foto"), (req, res) => {
   const { id_siswa, kategori, isi_laporan } = req.body;
   const foto = req.file ? req.file.filename : null;
@@ -138,17 +138,19 @@ app.get("/api/riwayat/:id_siswa", (req, res) => {
   });
 });
 
-// --- [ ADMIN SECTION ] ---
+// --- [ ADMIN & KEPSEK SECTION ] ---
 
 app.get("/api/admin/stats", (req, res) => {
   const { bulan, tahun } = req.query;
 
-  // PERBAIKAN: Pastikan status menggunakan 'SELESAI' (Huruf Kapital) sesuai database
   const qL =
     "SELECT COUNT(*) as total, SUM(status='SELESAI') as selesai FROM laporan WHERE MONTH(tanggal_lapor) = ? AND YEAR(tanggal_lapor) = ?";
-
   const qK =
     "SELECT COUNT(*) as total, SUM(status='SELESAI') as selesai FROM konsultasi WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ?";
+
+  // Query tambahan untuk statistik kategori (Bullying, Fasilitas, dll)
+  const qCat =
+    "SELECT kategori, COUNT(*) as jumlah FROM laporan WHERE MONTH(tanggal_lapor) = ? AND YEAR(tanggal_lapor) = ? GROUP BY kategori";
 
   db.query(qL, [bulan, tahun], (err, resL) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -156,14 +158,33 @@ app.get("/api/admin/stats", (req, res) => {
     db.query(qK, [bulan, tahun], (err, resK) => {
       if (err) return res.status(500).json({ error: err.message });
 
-      const dataLapor = resL[0] || { total: 0, selesai: 0 };
-      const dataKonsul = resK[0] || { total: 0, selesai: 0 };
+      db.query(qCat, [bulan, tahun], (err, resCat) => {
+        if (err) return res.status(500).json({ error: err.message });
 
-      res.json({
-        totalLaporan: dataLapor.total || 0,
-        laporanSelesai: dataLapor.selesai || 0,
-        totalKonsultasi: dataKonsul.total || 0,
-        konsultasiSelesai: dataKonsul.selesai || 0, // PERBAIKAN: Typo diperbaiki dari 'consultasiSelesai'
+        const dataLapor = resL[0] || { total: 0, selesai: 0 };
+        const dataKonsul = resK[0] || { total: 0, selesai: 0 };
+
+        // Inisialisasi kategori agar jika kosong tetap bernilai 0
+        const kategoriStats = {
+          BULLYING: 0,
+          FASILITAS: 0,
+          KEKERASAN: 0,
+          LAINNYA: 0,
+        };
+        resCat.forEach((row) => {
+          const key = row.kategori.toUpperCase();
+          if (kategoriStats.hasOwnProperty(key)) {
+            kategoriStats[key] = row.jumlah;
+          }
+        });
+
+        res.json({
+          totalPengaduan: dataLapor.total || 0,
+          pengaduanSelesai: dataLapor.selesai || 0,
+          totalKonsultasi: dataKonsul.total || 0,
+          konsultasiSelesai: dataKonsul.selesai || 0,
+          kategori: kategoriStats,
+        });
       });
     });
   });
@@ -178,41 +199,31 @@ app.get("/api/admin/laporan", (req, res) => {
   });
 });
 
-// UPDATE LAPORAN + EMAIL
 app.put("/api/admin/update-laporan/:id", (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
-
   const sqlGetEmail =
     "SELECT u.email, u.nama, l.kategori FROM laporan l JOIN users u ON l.id_siswa = u.id WHERE l.id = ?";
 
   db.query(sqlGetEmail, [id], (err, userData) => {
     if (err) return res.status(500).json({ error: err.message });
-
     db.query(
       "UPDATE laporan SET status = ? WHERE id = ?",
       [status, id],
       (err) => {
         if (err) return res.status(500).json({ error: err.message });
-
         if (userData.length > 0) {
           const { email, nama, kategori } = userData[0];
-          const mailOptions = {
+          transporter.sendMail({
             from: '"SIBY Group Support" <smptridharmamanado7@gmail.com>',
             to: email,
-            subject: `Update Status Laporan - ${kategori}`,
-            html: `
-              <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                <h2 style="color: #1e3a8a;">Halo ${nama},</h2>
-                <p>Laporan Anda mengenai <b>${kategori}</b> telah diperbarui.</p>
-                <p>Status terbaru: <span style="background: #1e3a8a; color: white; padding: 5px 10px; border-radius: 5px;">${status}</span></p>
-                <p>Silakan cek aplikasi untuk detail lebih lanjut.</p>
-                <hr />
-                <p style="font-size: 10px; color: #888;">Pesan otomatis dari SIBY Group - SMP Tridharma Manado</p>
-              </div>
-            `,
-          };
-          transporter.sendMail(mailOptions);
+            subject: `Update Status Pengaduan - ${kategori}`,
+            html: `<div style="font-family: Arial; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                  <h2>Halo ${nama},</h2>
+                  <p>Pengaduan Anda mengenai <b>${kategori}</b> telah diperbarui.</p>
+                  <p>Status terbaru: <b>${status}</b></p>
+                </div>`,
+          });
         }
         res.json({ success: true });
       },
@@ -229,45 +240,30 @@ app.get("/api/admin/konsultasi", (req, res) => {
   });
 });
 
-// UPDATE KONSULTASI + EMAIL
 app.put("/api/admin/update-konsultasi/:id", (req, res) => {
   const { jam, link_zoom, pesan_admin, status } = req.body;
   const { id } = req.params;
-
   const sqlGetEmail =
     "SELECT u.email, u.nama, g.nama_guru FROM konsultasi k JOIN users u ON k.id_siswa = u.id JOIN guru g ON k.id_guru = g.id_guru WHERE k.id = ?";
 
   db.query(sqlGetEmail, [id], (err, userData) => {
     if (err) return res.status(500).json({ error: err.message });
-
     db.query(
       "UPDATE konsultasi SET jam = ?, link_zoom = ?, pesan_admin = ?, status = ? WHERE id = ?",
       [jam, link_zoom, pesan_admin, status, id],
       (err) => {
         if (err) return res.status(500).json({ error: err.message });
-
         if (userData.length > 0) {
           const { email, nama, nama_guru } = userData[0];
-          const mailOptions = {
+          transporter.sendMail({
             from: '"SIBY Group Support" <smptridharmamanado7@gmail.com>',
             to: email,
             subject: `Update Jadwal Konsultasi - ${nama_guru}`,
-            html: `
-              <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                <h2 style="color: #1e3a8a;">Halo ${nama},</h2>
-                <p>Jadwal konsultasi kamu dengan <b>${nama_guru}</b> telah diperbarui.</p>
-                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #1e3a8a;">
-                  <p><b>Status:</b> ${status}</p>
-                  <p><b>Jam:</b> ${jam} WITA</p>
-                  <p><b>Link Pertemuan:</b> <a href="${link_zoom}">${link_zoom}</a></p>
-                </div>
-                <p><b>Pesan Admin:</b> <i>"${pesan_admin || "-"}"</i></p>
-                <hr />
-                <p style="font-size: 10px; color: #888;">Pesan otomatis dari SIBY Group - SMP Tridharma Manado</p>
-              </div>
-            `,
-          };
-          transporter.sendMail(mailOptions);
+            html: `<div style="font-family: Arial; padding: 20px; border: 1px solid #eee;">
+                  <h2>Halo ${nama},</h2>
+                  <p>Jadwal konsultasi Anda dengan <b>${nama_guru}</b> diperbarui menjadi status: ${status}</p>
+                </div>`,
+          });
         }
         res.json({ success: true });
       },

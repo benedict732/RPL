@@ -5,6 +5,7 @@ import Beranda from "./Beranda";
 import Laporan from "./Laporan";
 import Konsultasi from "./Konsultasi";
 import BerandaAdmin from "./BerandaAdmin";
+import BerandaKepsek from "./BerandaKepsek"; // Import halaman baru Kepsek
 import RiwayatLaporan from "./RiwayatLaporan";
 import RiwayatKonsultasi from "./RiwayatKonsultasi";
 import DetailLaporan from "./DetailLaporan";
@@ -24,7 +25,15 @@ const App: React.FC = () => {
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
-      setCurrentPage(parsedUser.role === "admin" ? "admin_beranda" : "beranda");
+
+      // Tentukan halaman beranda berdasarkan role saat aplikasi dimuat
+      if (parsedUser.role === "admin") {
+        setCurrentPage("admin_beranda");
+      } else if (parsedUser.role === "kepala sekolah") {
+        setCurrentPage("kepsek_beranda");
+      } else {
+        setCurrentPage("beranda");
+      }
     } else {
       setCurrentPage("login");
     }
@@ -33,7 +42,15 @@ const App: React.FC = () => {
   const handleLogin = (role: string) => {
     const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
     setUser(savedUser);
-    setCurrentPage(role === "admin" ? "admin_beranda" : "beranda");
+
+    // Navigasi otomatis setelah login berdasarkan role
+    if (role === "admin") {
+      setCurrentPage("admin_beranda");
+    } else if (role === "kepala sekolah") {
+      setCurrentPage("kepsek_beranda");
+    } else {
+      setCurrentPage("beranda");
+    }
   };
 
   const handleLogout = () => {
@@ -42,6 +59,7 @@ const App: React.FC = () => {
     setCurrentPage("login");
   };
 
+  // Proteksi: Jika belum login, hanya boleh lihat Login atau Register
   if (!user && currentPage !== "register") {
     return (
       <Login
@@ -60,7 +78,7 @@ const App: React.FC = () => {
           onTambahLaporan={() => setCurrentPage("laporan")}
           onGoKonsultasi={() => setCurrentPage("konsultasi")}
           onGoRiwayat={() => setCurrentPage("riwayat_konsultasi")}
-          onGoRiwayatLapor={() => setCurrentPage("riwayat_laporan")} // PERBAIKAN NAMA DISINI
+          onGoRiwayatLapor={() => setCurrentPage("riwayat_laporan")}
           onLihatDetail={(item: any) => {
             setSelectedData(item);
             setCurrentPage("detail_laporan");
@@ -99,12 +117,15 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* --- DETAIL (DIPAKAI SEMUA ROLE) --- */}
       {currentPage === "detail_laporan" && (
         <DetailLaporan
           onBack={() => {
-            setCurrentPage(
-              user.role === "admin" ? "admin_lihat_laporan" : "riwayat_laporan",
-            );
+            if (user?.role === "admin" || user?.role === "kepala sekolah") {
+              setCurrentPage("admin_lihat_laporan");
+            } else {
+              setCurrentPage("riwayat_laporan");
+            }
           }}
           selectedData={selectedData}
         />
@@ -126,9 +147,23 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* --- ROUTING KEPALA SEKOLAH --- */}
+      {currentPage === "kepsek_beranda" && (
+        <BerandaKepsek
+          onLogout={handleLogout}
+          onGoLaporan={() => setCurrentPage("admin_lihat_laporan")}
+          onGoKonsultasi={() => setCurrentPage("admin_lihat_konsultasi")}
+        />
+      )}
+
+      {/* --- PANEL MONITORING (ADMIN & KEPSEK) --- */}
       {currentPage === "admin_lihat_laporan" && (
         <AdminLihatLaporan
-          onBack={() => setCurrentPage("admin_beranda")}
+          onBack={() => {
+            setCurrentPage(
+              user.role === "admin" ? "admin_beranda" : "kepsek_beranda",
+            );
+          }}
           onDetail={(item: any) => {
             setSelectedData(item);
             setCurrentPage("admin_detail_laporan");
@@ -145,7 +180,11 @@ const App: React.FC = () => {
 
       {currentPage === "admin_lihat_konsultasi" && (
         <AdminLihatKonsultasi
-          onBack={() => setCurrentPage("admin_beranda")}
+          onBack={() => {
+            setCurrentPage(
+              user.role === "admin" ? "admin_beranda" : "kepsek_beranda",
+            );
+          }}
           onDetail={(item: any) => {
             setSelectedData(item);
             setCurrentPage("admin_detail_konsultasi");

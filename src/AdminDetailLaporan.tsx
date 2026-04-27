@@ -12,7 +12,13 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
   const [status, setStatus] = useState(selectedData?.status || "TERKIRIM");
   const [loading, setLoading] = useState(false);
 
+  // --- [ PROTEKSI ROLE ] ---
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isKepsek = user.role === "kepala sekolah";
+
   const handleUpdate = async () => {
+    // Keamanan tambahan: cegah fungsi jalan jika role adalah kepsek
+    if (isKepsek) return;
     if (!selectedData?.id) return alert("ID Laporan tidak valid");
 
     setLoading(true);
@@ -27,7 +33,7 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
       );
 
       if (res.ok) {
-        alert("Status Laporan Berhasil Diperbarui!");
+        alert("Status Pengaduan Berhasil Diperbarui!");
         onBack();
       } else {
         alert("Gagal memperbarui status.");
@@ -58,7 +64,7 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
             Kelola Pengaduan Siswa
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10 text-left">
             <div className="space-y-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
@@ -84,10 +90,16 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
                   Progres
                 </label>
+                {/* PERBAIKAN: Menambahkan 'disabled' jika isKepsek true */}
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl bg-blue-50 border-2 border-blue-600 font-black text-blue-900 outline-none focus:ring-4 ring-blue-100 transition-all cursor-pointer"
+                  disabled={isKepsek}
+                  className={`w-full px-6 py-4 rounded-2xl border-2 font-black outline-none transition-all ${
+                    isKepsek
+                      ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-50 border-blue-600 text-blue-900 focus:ring-4 ring-blue-100 cursor-pointer"
+                  }`}
                 >
                   <option value="TERKIRIM">TERKIRIM</option>
                   <option value="DITERIMA">DITERIMA</option>
@@ -122,17 +134,22 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={handleUpdate}
-            disabled={loading}
-            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-900 text-white hover:bg-blue-800"
-            }`}
-          >
-            {loading ? "Sedang Memproses..." : "Simpan Perubahan Status"}
-          </button>
+          {/* PERBAIKAN: Tombol aksi berubah menjadi label info jika role adalah kepsek */}
+          {isKepsek ? (
+            <div className="w-full py-5 rounded-2xl font-black uppercase tracking-widest bg-blue-50 text-blue-900 border border-blue-100 text-center text-xs"></div>
+          ) : (
+            <button
+              onClick={handleUpdate}
+              disabled={loading}
+              className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-900 text-white hover:bg-blue-800"
+              }`}
+            >
+              {loading ? "Sedang Memproses..." : "Simpan Perubahan Status"}
+            </button>
+          )}
         </div>
       </div>
     </div>
