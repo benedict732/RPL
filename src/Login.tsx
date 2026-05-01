@@ -41,7 +41,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
           <h1 className="text-white font-bold text-3xl tracking-tight italic">
             SIBY Group
           </h1>
-          <p className="text-white/60 text-[10px] mt-1 font-semibold uppercase tracking-[0.3em]">
+          <p className="text-white text-[10px] mt-1 font-semibold uppercase tracking-[0.3em]">
             SMP TRIDHARMA MANADO
           </p>
         </div>

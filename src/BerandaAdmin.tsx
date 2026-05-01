@@ -12,8 +12,8 @@ const BerandaAdmin: React.FC<AdminProps> = ({
   onGoKonsultasi,
 }) => {
   const [stats, setStats] = useState({
-    totalLaporan: 0,
-    laporanSelesai: 0,
+    totalPengaduan: 0, // Sinkron dengan backend
+    pengaduanSelesai: 0, // Sinkron dengan backend
     totalKonsultasi: 0,
     konsultasiSelesai: 0,
   });
@@ -28,9 +28,11 @@ const BerandaAdmin: React.FC<AdminProps> = ({
       );
       if (!res.ok) throw new Error("Gagal memuat data");
       const data = await res.json();
+
+      // PERBAIKAN: Mengambil nama field yang benar dari hasil API index.js
       setStats({
-        totalLaporan: data.totalLaporan || 0,
-        laporanSelesai: data.laporanSelesai || 0,
+        totalPengaduan: data.totalPengaduan || 0,
+        pengaduanSelesai: data.pengaduanSelesai || 0,
         totalKonsultasi: data.totalKonsultasi || 0,
         konsultasiSelesai: data.konsultasiSelesai || 0,
       });
@@ -140,7 +142,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             Total Pengaduan
           </p>
           <h4 className="text-4xl font-black text-blue-900">
-            {stats.totalLaporan}
+            {stats.totalPengaduan}
           </h4>
         </div>
         <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-100 flex flex-col items-center">
@@ -148,7 +150,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             Pengaduan Selesai
           </p>
           <h4 className="text-4xl font-black text-green-500">
-            {stats.laporanSelesai}
+            {stats.pengaduanSelesai}
           </h4>
         </div>
         <div
