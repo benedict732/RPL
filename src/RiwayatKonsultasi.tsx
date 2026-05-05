@@ -2,94 +2,84 @@ import React, { useState, useEffect } from "react";
 
 interface Props {
   onBack: () => void;
-  // PERBAIKAN: Tambahkan baris ini agar App.tsx tidak error
-  onLihatDetail: (item: any) => void;
+  onDetail: (item: any) => void;
 }
 
-const RiwayatKonsultasi: React.FC<Props> = ({ onBack, onLihatDetail }) => {
+const RiwayatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
   const [riwayat, setRiwayat] = useState<any[]>([]);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
+    if (!user.id) return;
     fetch(`http://localhost:8080/api/riwayat/${user.id}`)
       .then((res) => res.json())
       .then((data) => setRiwayat(Array.isArray(data) ? data : []))
-      .catch(() => setRiwayat([]));
+      .catch((err) => console.error("Gagal memuat riwayat:", err));
   }, [user.id]);
 
-  const formatTanggal = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
-    } catch (e) {
-      return dateString;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white p-10 font-sans text-left">
-      <div className="flex justify-between items-center mb-12">
-        <h1 className="text-4xl font-black text-blue-900 italic uppercase">
-          Riwayat Konsultasi
-        </h1>
+    <div className="min-h-screen bg-[#f8fafc] font-sans text-left pb-20">
+      <nav className="flex justify-between items-center px-12 py-8 bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-1.5 h-10 bg-[#1e3a8a] rounded-full"></div>
+          <div>
+            <h2 className="text-2xl font-black text-[#1e3a8a] italic uppercase tracking-tighter">
+              Riwayat Konsultasi
+            </h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
+              Monitoring Jadwal & Bimbingan SIBY
+            </p>
+          </div>
+        </div>
         <button
           onClick={onBack}
-          className="bg-red-500 text-white px-10 py-3 rounded-full font-black uppercase text-xs shadow-lg active:scale-95 transition-all"
+          className="bg-white border border-gray-200 text-[#1e3a8a] px-8 py-2 rounded-2xl font-black text-[10px] uppercase shadow-sm hover:bg-gray-50 transition-all tracking-widest active:scale-95"
         >
-          Kembali
+          Kembali ↩
         </button>
-      </div>
+      </nav>
 
-      <div className="space-y-6">
+      <div className="max-w-6xl mx-auto mt-12 px-10 space-y-6">
         {riwayat.length > 0 ? (
-          riwayat.map((item) => (
+          riwayat.map((item, index) => (
             <div
-              key={item.id}
-              // PERBAIKAN: Panggil onLihatDetail saat kotak diklik
-              onClick={() => onLihatDetail(item)}
-              className="bg-white p-8 rounded-[40px] shadow-2xl border border-gray-50 flex justify-between items-center cursor-pointer hover:border-orange-200 active:scale-[0.98] transition-all group"
+              key={index}
+              // INI KUNCI BIAR BISA DITEKAN
+              onClick={() => onDetail(item)}
+              className="group flex items-center bg-white p-8 rounded-[35px] border border-gray-50 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(30,58,138,0.12)] hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              <div className="flex items-center gap-8">
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 text-2xl shadow-inner">
-                  {item.status === "Selesai" ? "✓" : "⏳"}
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                    {formatTanggal(item.tanggal)}
-                  </p>
-                  <h4 className="text-xl font-black text-blue-900 group-hover:text-orange-500 transition-colors">
-                    {item.nama_guru}
-                  </h4>
-                  <p className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">
-                    Klik untuk lihat status & link →
-                  </p>
-                </div>
+              <div className="w-40 border-r-2 border-gray-50 pr-10 mr-10 flex flex-col items-center justify-center">
+                <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1">
+                  Pukul
+                </p>
+                <p className="text-2xl font-black text-[#1e3a8a] tracking-tight">
+                  {item.jam || "12:36"}
+                </p>
+                <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mt-1">
+                  WITA
+                </p>
               </div>
 
-              <div className="text-right">
-                <span
-                  className={`px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md ${
-                    item.status === "Diterima"
-                      ? "bg-orange-500 text-white"
-                      : "bg-blue-600 text-white"
-                  }`}
-                >
-                  {item.status}
-                </span>
-                <p className="text-[10px] font-bold text-gray-300 mt-2 italic">
-                  {item.jam} WITA
+              <div className="flex-1">
+                <h3 className="text-3xl font-black text-[#1e3a8a] italic uppercase tracking-tighter mb-2">
+                  {item.nama_guru || "Guru Pembimbing"}
+                </h3>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                  {item.tanggal}
                 </p>
+              </div>
+
+              <div className="ml-10">
+                <span className="bg-[#1e3a8a] text-white px-10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_10px_20px_rgba(30,58,138,0.3)]">
+                  {item.status || "Selesai"}
+                </span>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-20 bg-gray-50 rounded-[40px] border-2 border-dashed border-gray-200">
-            <p className="text-gray-400 font-bold italic uppercase tracking-widest">
-              Belum ada riwayat konsultasi
+          <div className="py-24 text-center bg-white rounded-[50px] border border-dashed border-gray-200">
+            <p className="text-gray-300 font-black italic uppercase tracking-[0.4em] text-sm text-center">
+              Belum Ada Jadwal Riwayat Konsultasi
             </p>
           </div>
         )}
